@@ -1,0 +1,49 @@
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DATA_DIR = BASE_DIR / "data"
+MODELS_DIR = BASE_DIR / "models"
+
+DATA_DIR.mkdir(exist_ok=True)
+MODELS_DIR.mkdir(exist_ok=True)
+
+IEEE_CIS_URL = "https://www.kaggle.com/competitions/ieee-fraud-detection"
+
+DEVICE = "cuda" if __import__("torch").cuda.is_available() else "cpu"
+
+GNNS = {
+    "graphsage": {
+        "hidden_channels": 128,
+        "num_layers": 3,
+        "dropout": 0.3,
+        "lr": 0.001,
+    },
+    "gat": {
+        "hidden_channels": 128,
+        "num_heads": 4,
+        "num_layers": 3,
+        "dropout": 0.3,
+        "lr": 0.001,
+    },
+}
+
+XGBOOST_PARAMS = {
+    "max_depth": 6,
+    "learning_rate": 0.1,
+    "n_estimators": 200,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "scale_pos_weight": 3.5,
+}
+
+LLM_CONFIG = {
+    "endpoint": "http://localhost:11434",
+    "model": "llama3.2",
+    "timeout": 30,
+}
+
+SHAP_PARAMS = {
+    "nsamples": 100,
+    "max_display": 10,
+}
