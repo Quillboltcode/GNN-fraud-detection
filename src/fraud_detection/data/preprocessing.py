@@ -3,18 +3,23 @@ import numpy as np
 import torch
 from torch_geometric.data import HeteroData
 from sklearn.preprocessing import LabelEncoder
+from typing import Optional
 from loguru import logger
 
 
 class GraphBuilder:
     """Build heterogeneous graph from IEEE-CIS transaction data."""
 
-    def __init__(self, train_path: str, test_path: str):
+    def __init__(self, train_path: str, test_path: str, identity_path: Optional[str] = None):
         self.train = pd.read_csv(train_path)
         self.test = pd.read_csv(test_path)
+        if identity_path:
+            identity = pd.read_csv(identity_path)
+            self.train = self.train.merge(identity, on="TransactionID", how="left")
+            self.test = self.test.merge(identity, on="TransactionID", how="left")
         self.combined = pd.concat([self.train, self.test], ignore_index=True)
         self.label_encoders = {}
-        self.node_types = ["transaction", "account", "device", "ip", "email"]
+        self.node_types = ["transaction", "account", "device", "email"]
 
     def _encode_column(self, col: str) -> np.ndarray:
         """Label encode a categorical column."""
@@ -29,22 +34,22 @@ class GraphBuilder:
         """Extract node features for each node type."""
         n_transactions = len(self.combined)
 
+        productcd_encoded = self._encode_column("ProductCD")
         trans_features = [
             "TransactionAmt",
-            "ProductCD_encoded",
             "card1", "card2", "card3", "card4", "card5", "card6",
             "addr1", "addr2",
         ]
         trans_feature_data = self.combined[trans_features].values.astype(np.float32)
+        trans_feature_data = np.column_stack([trans_feature_data, productcd_encoded.astype(np.float32)])
 
         device_features = self._encode_column("DeviceInfo")
-        ip_features = self._encode_column("IP_OBrowser")
+
         email_features = self._encode_column("P_emaildomain")
 
         return {
             "transaction": torch.tensor(trans_feature_data),
             "device": torch.tensor(device_features, dtype=torch.long).unsqueeze(1),
-            "ip": torch.tensor(ip_features, dtype=torch.long).unsqueeze(1),
             "email": torch.tensor(email_features, dtype=torch.long).unsqueeze(1),
         }
 
@@ -60,10 +65,6 @@ class GraphBuilder:
             ("transaction", "uses", "device"): (
                 torch.arange(n),
                 torch.tensor(self._encode_column("DeviceInfo"))
-            ),
-            ("transaction", "from_ip", "ip"): (
-                torch.arange(n),
-                torch.tensor(self._encode_column("IP_OBrowser"))
             ),
             ("transaction", "with_email", "email"): (
                 torch.arange(n),
@@ -99,6 +100,5 @@ class GraphBuilder:
         return {
             "transaction": len(self.combined),
             "device": len(self.label_encoders.get("DeviceInfo", [])),
-            "ip": len(self.label_encoders.get("IP_OBrowser", [])),
             "email": len(self.label_encoders.get("P_emaildomain", [])),
         }

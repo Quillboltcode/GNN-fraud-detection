@@ -74,6 +74,8 @@ def main():
     data_path = DATA_DIR
     train_csv = data_path / "train_transaction.csv"
     test_csv = data_path / "test_transaction.csv"
+    train_identity = data_path / "train_identity.csv"
+    test_identity = data_path / "test_identity.csv"
 
     if not train_csv.exists():
         logger.error(f"Data not found at {train_csv}")
@@ -81,7 +83,7 @@ def main():
         return
 
     logger.info("Building graph...")
-    builder = GraphBuilder(str(train_csv), str(test_csv))
+    builder = GraphBuilder(str(train_csv), str(test_csv), str(train_identity))
     data = builder.build_graph()
     logger.info(f"Graph: {data}")
 
