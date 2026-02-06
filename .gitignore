@@ -52,6 +52,9 @@ models/
 *.pt
 *.pth
 *.ckpt
+# Don't ignore Python source code in src/fraud_detection/models/
+!src/fraud_detection/models/*.py
+!src/fraud_detection/models/
 
 # Logs
 *.log
