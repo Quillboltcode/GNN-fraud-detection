@@ -43,6 +43,9 @@ data/
 *.parquet
 *.csv
 !data/.gitkeep
+# Don't ignore Python source code in src/fraud_detection/data/
+!src/fraud_detection/data/*.py
+!src/fraud_detection/data/
 
 # Models (large files)
 models/
