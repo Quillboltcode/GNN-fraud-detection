@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, classification_report
 from loguru import logger
+from fraud_detection.config import XGBOOST_TREE_METHOD
 
 
 class HybridClassifier:
@@ -17,6 +18,7 @@ class HybridClassifier:
             "subsample": 0.8,
             "colsample_bytree": 0.8,
             "scale_pos_weight": 3.5,
+            "tree_method": XGBOOST_TREE_METHOD,
             "use_label_encoder": False,
             "eval_metric": "auc",
         }

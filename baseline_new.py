@@ -10,7 +10,6 @@ import gc
 from sklearn.model_selection import GroupKFold
 from sklearn.metrics import roc_auc_score
 import xgboost as xgb
-import argparse
 
 
 STR_TYPE = [
@@ -346,8 +345,8 @@ def label_encode_and_reduce_memory(X_train, X_test):
             mn = np.min((X_train[f].min(), X_test[f].min()))
             X_train[f] -= np.float32(mn)
             X_test[f] -= np.float32(mn)
-            X_train[f] = X_train[f].fillna(-1)
-            X_test[f] = X_test[f].fillna(-1)
+            X_train[f].fillna(-1, inplace=True)
+            X_test[f].fillna(-1, inplace=True)
 
 
 def encode_FE(df1, df2, cols):
@@ -405,8 +404,8 @@ def encode_AG(
                 test_df[new_col_name] = test_df[col].map(temp_df).astype("float32")
 
                 if fillna:
-                    train_df[new_col_name] = train_df[new_col_name].fillna(-1)
-                    test_df[new_col_name] = test_df[new_col_name].fillna(-1)
+                    train_df[new_col_name].fillna(-1, inplace=True)
+                    test_df[new_col_name].fillna(-1, inplace=True)
 
                 print("'" + new_col_name + "'", ", ", end="")
 
@@ -496,7 +495,7 @@ def create_month_feature(X_train, X_test):
     X_test["DT_M"] = (X_test["DT_M"].dt.year - 2017) * 12 + X_test["DT_M"].dt.month
 
 
-def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
+def train_xgb_model(X_train, y_train, cols, n_splits=6):
     """Train XGBoost with GroupKFold cross-validation."""
     oof = np.zeros(len(X_train))
     skf = GroupKFold(n_splits=n_splits)
@@ -516,7 +515,7 @@ def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
             colsample_bytree=0.4,
             missing=-1,
             eval_metric="auc",
-            tree_method=tree_method,
+            tree_method="gpu_hist",
         )
 
         h = clf.fit(
@@ -537,13 +536,12 @@ def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
     return oof
 
 
-def main(input_dir, tree_method):
+def main():
     """Main training pipeline."""
-    print(f"Loading data from: {input_dir}")
-    print(f"Using tree method: {tree_method}")
+    INPUT_DIR = "../input/ieee-fraud-detection"
 
     print("Loading data...")
-    X_train, X_test, y_train = load_data(input_dir)
+    X_train, X_test, y_train = load_data(INPUT_DIR)
 
     print("\nNormalizing D columns...")
     normalize_d_columns(X_train, X_test)
@@ -554,35 +552,18 @@ def main(input_dir, tree_method):
     print("\nFeature engineering...")
     feature_engineering(X_train, X_test)
 
-    print("\nCreating month feature...")
-    create_month_feature(X_train, X_test)
-
     print("\nApplying feature selection...")
     X_train, X_test, cols = apply_feature_selection(X_train, X_test)
 
+    print("\nCreating month feature...")
+    create_month_feature(X_train, X_test)
+
     print("\nTraining XGBoost model...")
-    oof = train_xgb_model(X_train, y_train, cols, tree_method=tree_method)
+    oof = train_xgb_model(X_train, y_train, cols)
 
     return oof
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="XGBoost Baseline for IEEE-CIS Fraud Detection"
-    )
-    parser.add_argument(
-        "--input-dir",
-        type=str,
-        default="../input/ieee-fraud-detection",
-        help="Directory containing train and test data",
-    )
-    parser.add_argument(
-        "--tree-method",
-        type=str,
-        default="hist",
-        choices=["gpu_hist", "hist"],
-        help="XGBoost tree method (gpu_hist for GPU, hist for CPU)",
-    )
-    args = parser.parse_args()
-    
-    main(args.input_dir, args.tree_method)
+    main()
+import argparse

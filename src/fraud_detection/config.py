@@ -12,6 +12,8 @@ IEEE_CIS_URL = "https://www.kaggle.com/competitions/ieee-fraud-detection"
 
 DEVICE = "cuda" if __import__("torch").cuda.is_available() else "cpu"
 
+XGBOOST_TREE_METHOD = "gpu_hist" if DEVICE == "cuda" else "hist"
+
 GNNS = {
     "graphsage": {
         "hidden_channels": 128,
@@ -35,6 +37,9 @@ XGBOOST_PARAMS = {
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "scale_pos_weight": 3.5,
+    "tree_method": XGBOOST_TREE_METHOD,
+    "use_label_encoder": False,
+    "eval_metric": "auc",
 }
 
 LLM_CONFIG = {
