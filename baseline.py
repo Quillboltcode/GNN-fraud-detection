@@ -524,7 +524,6 @@ def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
             y_train.iloc[idxT],
             eval_set=[(X_train[cols].iloc[idxV], y_train.iloc[idxV])],
             verbose=100,
-            early_stopping_rounds=200,
         )
 
         oof[idxV] += clf.predict_proba(X_train[cols].iloc[idxV])[:, 1]
