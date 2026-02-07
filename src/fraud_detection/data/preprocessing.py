@@ -35,16 +35,19 @@ class GraphBuilder:
         n_transactions = len(self.combined)
 
         productcd_encoded = self._encode_column("ProductCD")
-        trans_features = [
-            "TransactionAmt",
-            "card1", "card2", "card3", "card4", "card5", "card6",
-            "addr1", "addr2",
-        ]
-        trans_feature_data = self.combined[trans_features].values.astype(np.float32)
-        trans_feature_data = np.column_stack([trans_feature_data, productcd_encoded.astype(np.float32)])
+        card4_encoded = self._encode_column("card4")
+        card6_encoded = self._encode_column("card6")
+
+        numeric_features = ["TransactionAmt", "card1", "card2", "card3", "card5", "addr1", "addr2"]
+        trans_feature_data = self.combined[numeric_features].values.astype(np.float32)
+        trans_feature_data = np.column_stack([
+            trans_feature_data,
+            productcd_encoded.astype(np.float32),
+            card4_encoded.astype(np.float32),
+            card6_encoded.astype(np.float32),
+        ])
 
         device_features = self._encode_column("DeviceInfo")
-
         email_features = self._encode_column("P_emaildomain")
 
         return {

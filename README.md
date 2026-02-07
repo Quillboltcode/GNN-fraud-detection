@@ -25,6 +25,7 @@ uv sync
 ## Usage
 
 ### Download Data (Kaggle Required)
+
 ```bash
 export KAGGLE_USERNAME=your_username
 export KAGGLE_KEY=your_api_key
@@ -32,11 +33,13 @@ python -m src.fraud_detection.data.download
 ```
 
 ### Train Models
+
 ```bash
 python -m src.fraud_detection.train
 ```
 
 ### Run Demo
+
 ```bash
 python -m demo.app
 ```
@@ -53,6 +56,7 @@ python -m demo.app
 ## Kaggle Notebook
 
 For reference implementations and comparison, see Kaggle notebooks:
+
 - IEEE-CIS Fraud Detection competition solutions
 - Graph-based fraud detection tutorials
 

@@ -58,3 +58,6 @@ models/
 
 # Logs
 *.log
+
+# Notebooks
+notebooks/
