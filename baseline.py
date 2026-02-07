@@ -10,6 +10,7 @@ import gc
 from sklearn.model_selection import GroupKFold
 from sklearn.metrics import roc_auc_score
 import xgboost as xgb
+import argparse
 
 
 STR_TYPE = [
@@ -495,7 +496,7 @@ def create_month_feature(X_train, X_test):
     X_test["DT_M"] = (X_test["DT_M"].dt.year - 2017) * 12 + X_test["DT_M"].dt.month
 
 
-def train_xgb_model(X_train, y_train, cols, n_splits=6):
+def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
     """Train XGBoost with GroupKFold cross-validation."""
     oof = np.zeros(len(X_train))
     skf = GroupKFold(n_splits=n_splits)
@@ -515,7 +516,7 @@ def train_xgb_model(X_train, y_train, cols, n_splits=6):
             colsample_bytree=0.4,
             missing=-1,
             eval_metric="auc",
-            tree_method="gpu_hist",
+            tree_method=tree_method,
         )
 
         h = clf.fit(
@@ -536,12 +537,13 @@ def train_xgb_model(X_train, y_train, cols, n_splits=6):
     return oof
 
 
-def main():
+def main(input_dir, tree_method):
     """Main training pipeline."""
-    INPUT_DIR = "../input/ieee-fraud-detection"
+    print(f"Loading data from: {input_dir}")
+    print(f"Using tree method: {tree_method}")
 
     print("Loading data...")
-    X_train, X_test, y_train = load_data(INPUT_DIR)
+    X_train, X_test, y_train = load_data(input_dir)
 
     print("\nNormalizing D columns...")
     normalize_d_columns(X_train, X_test)
@@ -559,10 +561,28 @@ def main():
     create_month_feature(X_train, X_test)
 
     print("\nTraining XGBoost model...")
-    oof = train_xgb_model(X_train, y_train, cols)
+    oof = train_xgb_model(X_train, y_train, cols, tree_method=tree_method)
 
     return oof
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="XGBoost Baseline for IEEE-CIS Fraud Detection"
+    )
+    parser.add_argument(
+        "--input-dir",
+        type=str,
+        default="../input/ieee-fraud-detection",
+        help="Directory containing train and test data",
+    )
+    parser.add_argument(
+        "--tree-method",
+        type=str,
+        default="hist",
+        choices=["gpu_hist", "hist"],
+        help="XGBoost tree method (gpu_hist for GPU, hist for CPU)",
+    )
+    args = parser.parse_args()
+    
+    main(args.input_dir, args.tree_method)
