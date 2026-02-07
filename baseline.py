@@ -496,7 +496,7 @@ def create_month_feature(X_train, X_test):
     X_test["DT_M"] = (X_test["DT_M"].dt.year - 2017) * 12 + X_test["DT_M"].dt.month
 
 
-def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
+def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist", device="cpu"):
     """Train XGBoost with GroupKFold cross-validation."""
     oof = np.zeros(len(X_train))
     skf = GroupKFold(n_splits=n_splits)
@@ -517,6 +517,7 @@ def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
             missing=-1,
             eval_metric="auc",
             tree_method=tree_method,
+            device=device,
         )
 
         h = clf.fit(
@@ -536,10 +537,10 @@ def train_xgb_model(X_train, y_train, cols, n_splits=6, tree_method="hist"):
     return oof
 
 
-def main(input_dir, tree_method):
+def main(input_dir, tree_method, device):
     """Main training pipeline."""
     print(f"Loading data from: {input_dir}")
-    print(f"Using tree method: {tree_method}")
+    print(f"Using tree method: {tree_method}, device: {device}")
 
     print("Loading data...")
     X_train, X_test, y_train = load_data(input_dir)
@@ -560,7 +561,7 @@ def main(input_dir, tree_method):
     X_train, X_test, cols = apply_feature_selection(X_train, X_test)
 
     print("\nTraining XGBoost model...")
-    oof = train_xgb_model(X_train, y_train, cols, tree_method=tree_method)
+    oof = train_xgb_model(X_train, y_train, cols, tree_method=tree_method, device=device)
 
     return oof
 
@@ -579,9 +580,16 @@ if __name__ == "__main__":
         "--tree-method",
         type=str,
         default="hist",
-        choices=["gpu_hist", "hist"],
-        help="XGBoost tree method (gpu_hist for GPU, hist for CPU)",
+        choices=["hist", "exact", "approx", "auto"],
+        help="XGBoost tree method",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        choices=["cpu", "cuda", "gpu:0", "gpu:1"],
+        help="XGBoost device (cpu, cuda, or gpu:0, gpu:1, etc.)",
     )
     args = parser.parse_args()
     
-    main(args.input_dir, args.tree_method)
+    main(args.input_dir, args.tree_method, args.device)
