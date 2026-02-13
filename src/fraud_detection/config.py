@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = Path("/kaggle/input/ieee-fraud-detection")
 MODELS_DIR = BASE_DIR / "models"
 
 DATA_DIR.mkdir(exist_ok=True)

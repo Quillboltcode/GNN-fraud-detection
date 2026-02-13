@@ -1,8 +1,10 @@
+from typing import Optional
 import torch
 import numpy as np
+import argparse
 from pathlib import Path
 from loguru import logger
-from fraud_detection.config import MODELS_DIR, DATA_DIR, GNNS, XGBOOST_PARAMS
+from fraud_detection.config import MODELS_DIR, DATA_DIR as CONFIG_DATA_DIR, GNNS, XGBOOST_PARAMS
 from fraud_detection.data.preprocessing import GraphBuilder
 from fraud_detection.models.gnn import GraphSAGEModel, GATModel
 from fraud_detection.models.classifier import HybridClassifier
@@ -67,11 +69,11 @@ def train_classifier(
     logger.info(f"Val AUC: {val_metrics['auc']:.4f}")
 
 
-def main():
+def main(data_dir: Optional[str] = None):
     """Main training pipeline."""
     logger.info("Starting fraud detection training pipeline...")
 
-    data_path = DATA_DIR
+    data_path = Path(data_dir) if data_dir else CONFIG_DATA_DIR
     train_csv = data_path / "train_transaction.csv"
     test_csv = data_path / "test_transaction.csv"
     train_identity = data_path / "train_identity.csv"
@@ -147,4 +149,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", type=str, default=None, help="Path to data directory")
+    args = parser.parse_args()
+    main(data_dir=args.data_dir)
